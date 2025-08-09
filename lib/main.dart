@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shopping_list_app/widgets/grocery_list.dart';
 
 void main(){
   runApp(MyApp());
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         ),
        
       ),
-      home: Scaffold(),
+      home: GroceryList(),
     );
   }
 }
