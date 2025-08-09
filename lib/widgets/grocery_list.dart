@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shopping_list_app/data/categories.dart';
 import 'package:shopping_list_app/models/grocery_items.dart';
 import 'package:shopping_list_app/models/category.dart';
+import 'package:shopping_list_app/widgets/new_item_form.dart';
 
 class GroceryList extends StatefulWidget {
   const GroceryList({super.key});
@@ -11,29 +12,43 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
-  final List<GroceryItems> _grocery_items = [
+  final List<GroceryItems> _groceryItems = [
     GroceryItems(category: categories[Categories.pantry]!, id: 'a',name: 'Rice',quantity: 5),
     GroceryItems(category: categories[Categories.drinks]!, id: 'b',name: 'Coco-Cola',quantity: 2),
   ];
+
+  void _addItem()async{
+
+    final newItem= await Navigator.of(context).push<GroceryItems>(MaterialPageRoute(builder: (ctx) => const NewItemForm()));
+
+    if(newItem == null){
+      return;
+    }
+    setState(() {
+      _groceryItems.add(newItem);
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Groceries'),
         actions: [
-          IconButton(onPressed: (){}, icon: Icon(Icons.add)),
+          IconButton(
+            onPressed: _addItem, 
+            icon: Icon(Icons.add)),
         ],
       ),
       body: ListView.builder(
-        itemCount: _grocery_items.length,
+        itemCount: _groceryItems.length,
         itemBuilder: (context, index) => ListTile(
-          title: Text(_grocery_items[index].name),
+          title: Text(_groceryItems[index].name),
           leading: Container(
             width: 16,
             height: 16,
-            color: _grocery_items[index].category.color,
+            color: _groceryItems[index].category.color,
           ),
-          trailing: Text(_grocery_items[index].quantity.toString()),
+          trailing: Text(_groceryItems[index].quantity.toString()),
         )),
     );
   }

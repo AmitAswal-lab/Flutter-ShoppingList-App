@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/widgets/grocery_list.dart';
 
-void main(){
+void main() {
   runApp(MyApp());
 }
 
@@ -16,11 +16,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF26A69A), // Teal-ish green
           brightness: Brightness.dark,
-          surface: const Color(0xFF1E2A2F), // Dark, almost black-blue
+          surface: const Color(0xFF1E2A2F), // Dark surface
         ),
-        scaffoldBackgroundColor: const Color(
-          0xFF121A1D,
-        ), 
+        scaffoldBackgroundColor: const Color(0xFF121A1D),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF1E2A2F),
           foregroundColor: Colors.amberAccent,
@@ -32,7 +30,12 @@ class MyApp extends StatelessWidget {
             textStyle: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-       
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.amberAccent, // Text color
+            textStyle: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
       ),
       home: GroceryList(),
     );
