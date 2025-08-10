@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/data/categories.dart';
 import 'package:shopping_list_app/models/grocery_items.dart';
-import 'package:shopping_list_app/models/category.dart';
 import 'package:shopping_list_app/widgets/new_item_form.dart';
+import 'package:http/http.dart' as http;
 
 class GroceryList extends StatefulWidget {
   const GroceryList({super.key});
@@ -12,26 +14,66 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
-  final List<GroceryItems> _groceryItems = [
-    GroceryItems(
-      category: categories[Categories.pantry]!,
-      id: 'a',
-      name: 'Rice',
-      quantity: 5,
-    ),
-    GroceryItems(
-      category: categories[Categories.drinks]!,
-      id: 'b',
-      name: 'Coco-Cola',
-      quantity: 2,
-    ),
-  ];
+  List<GroceryItems> _groceryItems = [];
+  String? _error;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItem();
+  }
+
+  void _loadItem() async {
+    final url = Uri.https(
+      'flutter-shopping-list-ap-d0396-default-rtdb.asia-southeast1.firebasedatabase.app',
+      'shopping-list.json',
+    );
+    try {
+      final response = await http.get(url);
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = 'Data loading failed. Please try again.';
+        });
+      }
+      if (response.body == 'null') {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+      final Map<String, dynamic> listData = json.decode(response.body);
+      final List<GroceryItems> loadItems = [];
+      for (final item in listData.entries) {
+        final category = categories.entries
+            .firstWhere(
+              (element) => element.value.title == item.value['category'],
+            )
+            .value;
+        loadItems.add(
+          GroceryItems(
+            quantity: item.value['quantity'],
+            category: category,
+            id: item.key,
+            name: item.value['name'],
+          ),
+        );
+      }
+      setState(() {
+        _groceryItems = loadItems;
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _error = 'Something went wrong! Please try again.';
+      });
+    }
+  }
 
   void _addItem() async {
     final newItem = await Navigator.of(context).push<GroceryItems>(
       MaterialPageRoute(builder: (ctx) => const NewItemForm()),
     );
-
     if (newItem == null) {
       return;
     }
@@ -40,19 +82,37 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
+  void _removeItem(GroceryItems item) async {
+    final index = _groceryItems.indexOf(item);
+    setState(() {
+      _groceryItems.remove(item);
+    });
+    final url = Uri.https(
+      'flutter-shopping-list-ap-d0396-default-rtdb.asia-southeast1.firebasedatabase.app',
+      'shopping-list/${item.id}.json',
+    );
+    final response = await http.delete(url);
+
+    if (response.statusCode >= 400) {
+      _groceryItems.insert(index, item);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget content = Center(child: Text('No Grocery added yet.'));
+
+    if (_isLoading) {
+      content = Center(child: CircularProgressIndicator());
+    }
 
     if (_groceryItems.isNotEmpty) {
       content = ListView.builder(
         itemCount: _groceryItems.length,
         itemBuilder: (context, index) => Dismissible(
           key: ValueKey(_groceryItems[index].id),
-          onDismissed: (direction){
-            setState(() {
-              _groceryItems.remove(_groceryItems[index]);
-            });     
+          onDismissed: (direction) {
+            _removeItem(_groceryItems[index]);
           },
           child: ListTile(
             title: Text(_groceryItems[index].name),
@@ -65,6 +125,9 @@ class _GroceryListState extends State<GroceryList> {
           ),
         ),
       );
+    }
+    if (_error != null) {
+      content = Center(child: Text(_error!));
     }
     return Scaffold(
       appBar: AppBar(
